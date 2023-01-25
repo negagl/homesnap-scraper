@@ -78,5 +78,5 @@ func main() {
 	var result map[string]interface{}
 	json.Unmarshal([]byte(body), &result)
 
-	fmt.Println(result)
+	fmt.Println(result["d"].(map[string]interface{})["PropertyID"])
 }
