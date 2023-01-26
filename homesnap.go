@@ -5,21 +5,22 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
 
 type House struct {
-	PropertyID        int    `json:"propertyid"`
-	FullStreetAddress string `json:"address"`
-	City              string `json:"city"`
-	State             string `json:"state"`
-	Zip               string `json:"zip"`
-	Beds              string `json:"beds"`
-	BathsFull         string `json:"bathsfull"`
-	SqFt              string `json:"sqft"`
-	Value             string `json:"value"`
-	Rent              string `json:"rent"`
+	PropertyID        int `json:"propertyid"`
+	FullStreetAddress any `json:"address"`
+	City              any `json:"city"`
+	State             any `json:"state"`
+	Zip               any `json:"zip"`
+	Beds              any `json:"beds"`
+	BathsFull         any `json:"bathsfull"`
+	SqFt              any `json:"sqft"`
+	Value             any `json:"value"`
+	Rent              any `json:"rent"`
 }
 
 func main() {
@@ -31,11 +32,36 @@ func main() {
 	city := "Fresno"
 	state := "CA"
 
+	// Getting the Property ID
 	house.PropertyID = GetPropertyID(address, city, state)
 
-	fmt.Println("PropertyID: ", house.PropertyID)
+	// Getting the details using property id
+	details := GetPropertyDetails(strconv.Itoa(house.PropertyID))
 
-	GetPropertyDetails(strconv.Itoa(house.PropertyID))
+	// Assigning rest of values to the struct
+	house.FullStreetAddress = details["FullStreetAddress"]
+	house.City = details["City"]
+	house.State = details["State"]
+	house.Zip = details["Zip"]
+	house.Beds = details["Beds"]
+	house.BathsFull = details["BathsFull"]
+	house.SqFt = details["SqFt"]
+	house.Value = details["Value"]
+	house.Rent = details["Rent"]
+
+	// Extracting data in JSON
+	content, err := json.Marshal(house)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	addressFormatted := strings.ReplaceAll(address, " ", "-")
+	fileName := fmt.Sprintf(`%s.json`, addressFormatted)
+
+	os.WriteFile(fileName, content, 0644)
+
+	fmt.Println("Script Finished!!!")
 }
 
 func GetPropertyID(address string, city string, state string) int {
@@ -102,7 +128,7 @@ func GetPropertyID(address string, city string, state string) int {
 	return propertyId
 }
 
-func GetPropertyDetails(propertyId string) []any {
+func GetPropertyDetails(propertyId string) map[string]any {
 
 	// First we connect to the GetByURL endpoint to extract the PropertyID
 	url := "https://www.homesnap.com/service/Properties/GetDetails"
@@ -147,21 +173,17 @@ func GetPropertyDetails(propertyId string) []any {
 	var result map[string]interface{}
 	json.Unmarshal([]byte(body), &result)
 
-	// property := result["d"].(map[string]any)
-	// var propertyData []any
+	property := result["d"].(map[string]any)
+	propertyData := make(map[string]any)
 
-	// for key, value := range property {
-	// 	// Each value is an `any` type, that is type asserted as a string
-	// 	if key == "PropertyID" {
-	// 		propertyIdFloat := value.(float64)
-	// 		propertyId = int(propertyIdFloat)
-	// 		// fmt.Println(key, propertyId)
+	for key, value := range property {
+		// Each value is an `any` type, that is type asserted as a string
+		if key == "FullStreetAddress" || key == "City" || key == "State" || key == "Zip" || key == "Beds" || key == "BathsFull" || key == "SqFt" || key == "Value" || key == "Rent" {
+			propertyData[key] = value
+		}
+	}
 
-	// 		break
-	// 	}
-	// }
-
-	return []any{}
+	return propertyData
 }
 
 // fmt.Println(result)
