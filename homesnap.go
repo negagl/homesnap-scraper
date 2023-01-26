@@ -78,5 +78,19 @@ func main() {
 	var result map[string]interface{}
 	json.Unmarshal([]byte(body), &result)
 
-	fmt.Println(result["d"].(map[string]interface{})["PropertyID"])
+	property := result["d"].(map[string]any)
+
+	for key, value := range property {
+		// Each value is an `any` type, that is type asserted as a string
+		if key == "PropertyID" {
+			propertyIdFloat := value.(float64)
+			propertyId := int(propertyIdFloat)
+			fmt.Println(key, propertyId)
+
+			break
+		}
+	}
 }
+
+// fmt.Println(result)
+// os.Exit(0)
