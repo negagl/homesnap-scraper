@@ -9,22 +9,32 @@ import (
 )
 
 type House struct {
-	Address string `json:"address"`
-	City    string `json:"city"`
-	State   string `json:"state"`
-	Zipcode string `json:"zipcode"`
-	Beds    string `json:"beds"`
-	Baths   string `json:"baths"`
-	Sqft    string `json:"sqft"`
-	Price   string `json:"price"`
-	Rent    string `json:"rent"`
+	PropertyID int    `json:"propertyid"`
+	Address    string `json:"address"`
+	City       string `json:"city"`
+	State      string `json:"state"`
+	Zipcode    string `json:"zipcode"`
+	Beds       string `json:"beds"`
+	Baths      string `json:"baths"`
+	Sqft       string `json:"sqft"`
+	Price      string `json:"price"`
+	Rent       string `json:"rent"`
 }
 
 func main() {
+	// Instance of House
+	var house House
 
 	address := "1616 E Cornell Avenue"
 	city := "Fresno"
 	state := "CA"
+
+	house.PropertyID = GetPropertyID(address, city, state)
+
+	fmt.Println("PropertyID: ", house.PropertyID)
+}
+
+func GetPropertyID(address string, city string, state string) int {
 
 	address = strings.ReplaceAll(address, " ", "-")
 
@@ -41,7 +51,7 @@ func main() {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return 0
 	}
 	req.Header.Add("authority", "www.homesnap.com")
 	req.Header.Add("accept", "application/json, text/javascript, */*; q=0.01")
@@ -63,7 +73,7 @@ func main() {
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return 0
 	}
 	defer res.Body.Close()
 
@@ -71,7 +81,7 @@ func main() {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return 0
 	}
 
 	// Parse the JSON response
@@ -79,17 +89,20 @@ func main() {
 	json.Unmarshal([]byte(body), &result)
 
 	property := result["d"].(map[string]any)
+	var propertyId int
 
 	for key, value := range property {
 		// Each value is an `any` type, that is type asserted as a string
 		if key == "PropertyID" {
 			propertyIdFloat := value.(float64)
-			propertyId := int(propertyIdFloat)
-			fmt.Println(key, propertyId)
+			propertyId = int(propertyIdFloat)
+			// fmt.Println(key, propertyId)
 
 			break
 		}
 	}
+
+	return propertyId
 }
 
 // fmt.Println(result)
